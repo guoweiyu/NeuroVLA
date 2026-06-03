@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+.installed.cfg
+
+# ---------------------------------------------------------------------------
+# Editor / OS temp files  (a stray .README.md.swp was previously committed)
+# ---------------------------------------------------------------------------
+*.swp
+*.swo
+*.swn
+*~
+.*.swp
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# IDE / tooling caches
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.cache/
+
+# ---------------------------------------------------------------------------
+# Virtual environments
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ---------------------------------------------------------------------------
+# Secrets / credentials
+# ---------------------------------------------------------------------------
+.env
+*.env
+.hf_token
+.wandb_api_key
+.*_token
+.*_api_key
+tokenizer.model
+
+# ---------------------------------------------------------------------------
+# Training / evaluation artifacts (heavy, machine-specific — keep out of git)
+# ---------------------------------------------------------------------------
+playground/Checkpoints/
+playground/Pretrained_models/
+playground/Datasets/
+checkpoints/
+results/
+logs/
+wandb/
+nohup.out
+*.out
+*.log
+
+# Jupyter
+.ipynb_checkpoints/

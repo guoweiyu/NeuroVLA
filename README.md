@@ -14,6 +14,9 @@
 [![Nature](https://img.shields.io/badge/Nature-Under%20Review-E30613?style=flat-square)](https://github.com/guoweiyu/NeuroVLA)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-AGPL%20v3-00599C?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.gnu.org/licenses/agpl-3.0)
+[![Part of AlphaBrain](https://img.shields.io/badge/Part%20of-AlphaBrain-8A2BE2?style=flat-square)](https://github.com/AlphaBrainGroup/AlphaBrain)
+
+📦 The reference implementation and reproducible training/evaluation pipeline are maintained in the **[AlphaBrain](https://github.com/AlphaBrainGroup/AlphaBrain)** framework, where NeuroVLA ships as the brain-inspired VLA module.
 
 </div>
 
@@ -66,6 +69,21 @@ Our experiments on both simulated benchmarks and physical robotic hardware demon
     * *Temporal Sparsity:* Neurons spontaneously revert to quiescence during static posturing to minimize metabolic cost.
     * *Spatial Disentanglement:* The network naturally segregates high-dimensional control signals into distinct, somatotopic behavioral modes.
 
+### 📊 Simulation Benchmark — LIBERO
+
+Success rate (%) on the LIBERO benchmark (4 task suites, 100 episodes per suite). The spiking action head is evaluated with three neuron models of increasing biological richness — **LIF** (fixed dynamics), **PLIF** (learnable membrane decay & threshold), and **ALIF** (LSNN-style spike-frequency adaptation):
+
+| SNN action head  | Goal | Spatial | Object | Long-horizon (10) | **Avg** |
+|:-----------------|:----:|:-------:|:------:|:-----------------:|:-------:|
+| LIF              |  98  |   94    |   99   |        85         |  94.0   |
+| ALIF             |  96  | **96**  |   98   |        88         |  94.5   |
+| **PLIF** (best)  |  96  |   90    |   99   |      **95**       | **95.0** |
+
+* **Learnable spiking dynamics improve long-horizon control.** PLIF reaches **95% on the 10-task long-horizon suite**, exactly where temporal credit assignment matters most — confirming that the spinal SNN's membrane dynamics, not just scale, drive the gains.
+* **Online R-STDP (test-time, zero backprop).** Reward-modulated spike-timing plasticity adapts the SNN head *during deployment* from self-supervised signals — with the largest gains on the hardest long-horizon suite — without any backward pass, demonstrating localized, on-device learning.
+
+> Benchmark numbers come from the AlphaBrain NeuroVLA pipeline (Qwen2.5-VL-3B backbone → layer-wise QFormer → SNN MLP-ResNet action head). Reproduce them with the [AlphaBrain ▸ NeuroVLA quickstart](https://github.com/AlphaBrainGroup/AlphaBrain/blob/main/docs/quickstart/neurovla.md).
+
 ## 🛠️ Installation
 
 The environment setup is based on standard VLA dependencies. We recommend using `conda` to manage the environment.
@@ -98,11 +116,27 @@ Note: For specific dependency versions and detailed configuration related to the
 
 ```bash
 # 1. Run training example
-bash NeuroVLA/scripts/run_scripts/run_libero_train_NeuroVLA.sh
+bash scripts/run_scripts/run_libero_train.sh
 
-# 2. Run evaluation example
-bash NeuroVLA/examples/LIBERO/eval_libero.sh
+# 2. Run evaluation — uses two terminals (see examples/LIBERO/README.md)
+#    Terminal A: start the inference server
+bash examples/LIBERO/run_server.sh
+#    Terminal B: run the LIBERO simulation rollout
+bash examples/LIBERO/eval_libero.sh
 ```
+
+> **Before running**, open each script and set the environment-specific paths to your setup: the VLM weights (`MODEL_PATH`, e.g. `Qwen/Qwen2.5-VL-3B-Instruct`), the LIBERO dataset (`data_root_dir`), the checkpoint to evaluate (`your_ckpt`), and `CUDA_VISIBLE_DEVICES`. Evaluation runs as a client/server pair — `run_server.sh` hosts the policy, `eval_libero.sh` drives the LIBERO simulation. For the full, parameterized pipeline (pretrain → R-STDP fine-tune → LIBERO eval with online STDP), use the [AlphaBrain brain-inspired scripts](https://github.com/AlphaBrainGroup/AlphaBrain/tree/main/scripts/run_brain_inspired_scripts).
+
+## 🌐 Part of the AlphaBrain Ecosystem
+
+NeuroVLA is the brain-inspired VLA module of **[AlphaBrain](https://github.com/AlphaBrainGroup/AlphaBrain)** — a modular, open-source framework for embodied-intelligence research that unifies multiple VLA architectures, world-model backbones, biologically-inspired learning rules, and reinforcement-learning paradigms under one stack.
+
+Within AlphaBrain, NeuroVLA contributes the **spiking action head + R-STDP** capability and shares the same trainer, config system, and inference interface as the other frameworks (OFT / GR00T / PI / CosmosPolicy). If you want the fully reproducible, parameterized pipeline, the maintained models, and the broader benchmark suite, start there:
+
+* 📚 **Docs:** [alphabraingroup.github.io/AlphaBrain](https://alphabraingroup.github.io/AlphaBrain/)
+* 🧠 **NeuroVLA quickstart:** [docs/quickstart/neurovla.md](https://github.com/AlphaBrainGroup/AlphaBrain/blob/main/docs/quickstart/neurovla.md)
+* 🛠️ **Training & eval scripts:** [scripts/run_brain_inspired_scripts](https://github.com/AlphaBrainGroup/AlphaBrain/tree/main/scripts/run_brain_inspired_scripts)
+* 🤗 **Models:** [huggingface.co/AlphaBrainGroup](https://huggingface.co/AlphaBrainGroup)
 
 ## 📝 Citation
 If you find our code or architecture helpful in your research, please cite our repository:
