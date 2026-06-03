@@ -1,85 +1,93 @@
 # 🚀 LIBERO Evaluation
 
-This document provides instructions for reproducing our **experimental results** with LIBERO.  
-The evaluation process consists of two main parts:  
+This document explains how to evaluate **NeuroVLA** on the [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) benchmark. The pipeline has two parts:
 
-1. Setting up the `LIBERO` environment and dependencies.  
-2. Running the evaluation by launching services in both `internvla_m1` and `LIBERO` environments.  
+1. Setting up the `LIBERO` environment and dependencies.
+2. Running the evaluation as a **client/server pair**: a NeuroVLA policy server plus the LIBERO simulation client.
 
-We have verified that this workflow runs successfully on both **NVIDIA A100** and **RTX 4090** GPUs.  
+We have verified that this workflow runs on **NVIDIA A100 / A800** and **RTX 4090** GPUs.
 
 ---
 
 ## 📊 Experimental Results
-|                 | Spatial | Objects | Goal | Long | Avg  |
-|-----------------|---------|---------|------|------|------|
-| GR00T N1        | 94.4    | 97.6    | 93.0 | 90.6 | 93.9 |
-| $\pi_0$         | 96.8    | 98.8    | 95.8 | 85.2 | 94.2 |
-| $\pi_{0.5}$-Fast| 96.4    | 96.8    | 88.6 | 60.2 | 85.5 |
-| $\pi_{0.5}$-KI  | 98.0    | 97.8    | **95.6** | 85.8 | 94.3 |
-| InternVLA-M1    | **98.0**    | **99.0**    | 93.8 | **92.6** | **95.9** |
+
+NeuroVLA on LIBERO (success rate %, 4 task suites, 100 episodes per suite). The spiking action head is evaluated with three neuron models of increasing biological richness:
+
+| SNN action head | Spatial | Object | Goal | Long (10) | Avg  |
+|:----------------|:-------:|:------:|:----:|:---------:|:----:|
+| LIF             |   94    |   99   |  98  |    85     | 94.0 |
+| ALIF            | **96**  |   98   |  96  |    88     | 94.5 |
+| **PLIF** (best) |   90    |   99   |  96  |  **95**   | **95.0** |
+
+**Learning rule (batch 32, 50k steps).** A biologically-plausible, local **e-prop** rule (eligibility traces, O(1)-in-time memory, no backprop-through-time) matches surrogate-gradient BPTT:
+
+| Learning rule | Spatial | Object | Goal | Long (10) | Avg   |
+|:--------------|:-------:|:------:|:----:|:---------:|:-----:|
+| BPTT          |   88    |   98   |  98  |    91     | 93.75 |
+| **e-prop**    |   93    |   99   | 100  |    90     | **95.5** |
+
+> Full training/eval recipes and the broader leaderboard are maintained in [AlphaBrain ▸ NeuroVLA quickstart](https://github.com/AlphaBrainGroup/AlphaBrain/blob/main/docs/quickstart/neurovla.md).
 
 ---
 
-## ⬇️ 0. Download Checkpoints
-First, download the checkpoints from 
-- [LIBERO-Object](https://huggingface.co/InternRobotics/InternVLA-M1-LIBERO-Object)
-- [LIBERO-Spatial](https://huggingface.co/InternRobotics/InternVLA-M1-LIBERO-Spatial)
-- [LIBERO-Goal](https://huggingface.co/InternRobotics/InternVLA-M1-LIBERO-Goal)
-- [LIBERO-Long](https://huggingface.co/InternRobotics/InternVLA-M1-LIBERO-Long)
+## ⬇️ 0. Checkpoints
 
+Train your own checkpoint with the [training pipeline](#-libero-training) below, or use the maintained models from the AlphaBrain model hub:
 
+- 🤗 [huggingface.co/AlphaBrainGroup](https://huggingface.co/AlphaBrainGroup)
+
+Place (or point to) your checkpoint, then set its path inside `examples/LIBERO/run_server.sh`.
+
+---
 
 ## 📦 1. Environment Setup
 
-To set up the environment, please first follow the official [LIBERO repository](https://github.com/Lifelong-Robot-Learning/LIBERO) to install the base `LIBERO` environment.  
+First follow the official [LIBERO repository](https://github.com/Lifelong-Robot-Learning/LIBERO) to install the base `LIBERO` simulation environment. The NeuroVLA policy server runs in the `neurovla` environment (see the [top-level README](../../README.md#%EF%B8%8F-installation) for setup).
 
 ---
 
 ## 🚀 2. Evaluation Workflow
 
-The evaluation should be run **from the repository root** using **two separate terminals**, one for each environment:  
+Run **from the repository root** using **two terminals**, one per environment:
 
-- **internvla_m1 environment**: runs the inference server.  
-- **LIBERO environment**: runs the simulation.  
+- **`neurovla` environment** — runs the NeuroVLA inference server.
+- **`LIBERO` environment** — runs the simulation client.
 
-### Step 1. Start the server (internvla_m1 environment)
-
-In the first terminal, activate the `internvla_m1` conda environment and run:  
+### Step 1. Start the policy server (`neurovla` environment)
 
 ```bash
 bash examples/LIBERO/run_server.sh
 ```
 
-⚠️ **Note:** Please ensure that you specify the correct checkpoint path in `examples/LIBERO/run_server.sh`  
-
+⚠️ Set the correct checkpoint path inside `examples/LIBERO/run_server.sh`.
 
 ---
 
-### Step 2. Start the simulation (LIBERO environment)
-
-In the second terminal, activate the `LIBERO` conda environment and run:  
+### Step 2. Start the simulation (`LIBERO` environment)
 
 ```bash
 bash examples/LIBERO/eval_libero.sh
 ```
-⚠️ **Note:** Please ensure that you specify the correct checkpoint path in `examples/LIBERO/eval_libero.sh` to load action unnormalization stats. 
 
-
+⚠️ Set the matching checkpoint path inside `examples/LIBERO/eval_libero.sh` so the correct action-unnormalization stats are loaded.
 
 ---
 
-
 # 🚀 LIBERO Training
-## 📦 Step0: Download the training dataset
-Download the datasets to the playground/Datasets/LEROBOT_LIBERO_DATA directory:
-- [LIBERO-spatial] https://huggingface.co/datasets/IPEC-COMMUNITY/libero_spatial_no_noops_1.0.0_lerobot
-- [LIBERO-object] https://huggingface.co/datasets/IPEC-COMMUNITY/libero_object_no_noops_1.0.0_lerobot
-- [LIBERO-goal] https://huggingface.co/datasets/IPEC-COMMUNITY/libero_goal_no_noops_1.0.0_lerobot
-- [LIBERO-10] https://huggingface.co/datasets/IPEC-COMMUNITY/libero_10_no_noops_1.0.0_lerobot
 
-## 🚀 Step1: Start Training
+## 📦 Step 0: Download the training dataset
+
+Download the datasets into `playground/Datasets/LEROBOT_LIBERO_DATA/`:
+
+- [LIBERO-Spatial](https://huggingface.co/datasets/IPEC-COMMUNITY/libero_spatial_no_noops_1.0.0_lerobot)
+- [LIBERO-Object](https://huggingface.co/datasets/IPEC-COMMUNITY/libero_object_no_noops_1.0.0_lerobot)
+- [LIBERO-Goal](https://huggingface.co/datasets/IPEC-COMMUNITY/libero_goal_no_noops_1.0.0_lerobot)
+- [LIBERO-10](https://huggingface.co/datasets/IPEC-COMMUNITY/libero_10_no_noops_1.0.0_lerobot)
+
+## 🚀 Step 1: Start training
 
 ```bash
 bash scripts/run_scripts/run_libero_train.sh
 ```
+
+> Set the dataset/model paths inside the script before running. For the full parameterized pipeline (pretrain → R-STDP fine-tune → eval with online STDP), see the [AlphaBrain brain-inspired scripts](https://github.com/AlphaBrainGroup/AlphaBrain/tree/main/scripts/run_brain_inspired_scripts).

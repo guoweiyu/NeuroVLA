@@ -82,6 +82,15 @@ Success rate (%) on the LIBERO benchmark (4 task suites, 100 episodes per suite)
 * **Learnable spiking dynamics improve long-horizon control.** PLIF reaches **95% on the 10-task long-horizon suite**, exactly where temporal credit assignment matters most — confirming that the spinal SNN's membrane dynamics, not just scale, drive the gains.
 * **Online R-STDP (test-time, zero backprop).** Reward-modulated spike-timing plasticity adapts the SNN head *during deployment* from self-supervised signals — with the largest gains on the hardest long-horizon suite — without any backward pass, demonstrating localized, on-device learning.
 
+**Brain-inspired learning rule — local e-prop matches global BPTT.** At matched budget (batch 32, 50k steps), training the spiking head with biologically-plausible **symmetric e-prop** (local eligibility traces, *O(1)-in-time* memory, no backprop-through-time) matches surrogate-gradient BPTT on LIBERO — including the long-horizon suite:
+
+| Learning rule (bs32, 50k)      | Goal | Spatial | Object | Long-horizon (10) | **Avg** |
+|:-------------------------------|:----:|:-------:|:------:|:-----------------:|:-------:|
+| BPTT (surrogate gradient)      |  98  |   88    |   98   |        91         |  93.75  |
+| **e-prop** (local, O(1)-time)  | 100  |   93    |   99   |        90         | **95.5** |
+
+A local, online-capable learning rule trains the SNN head at **no measurable task cost** versus global backprop — a concrete step toward backprop-free, on-device embodied learning.
+
 > Benchmark numbers come from the AlphaBrain NeuroVLA pipeline (Qwen2.5-VL-3B backbone → layer-wise QFormer → SNN MLP-ResNet action head). Reproduce them with the [AlphaBrain ▸ NeuroVLA quickstart](https://github.com/AlphaBrainGroup/AlphaBrain/blob/main/docs/quickstart/neurovla.md).
 
 ## 🛠️ Installation

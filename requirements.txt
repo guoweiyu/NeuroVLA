@@ -11,7 +11,11 @@ tensorboard
 matplotlib
 websocket-client==1.8.0
 albumentations==1.4.18
+# provides the `pytorch3d` package (used in dataloader rotation transforms)
 pipablepytorch3d==0.7.6
+# decord and eva-decord both provide `import decord` (video reading).
+# Install ONE that matches your platform: `decord` (Linux/x86) or `eva-decord`
+# (maintained fork, e.g. macOS / newer toolchains). Keeping both can conflict.
 decord==0.6.0
 eva-decord==0.6.1
 pydantic==2.10.6
